@@ -17,7 +17,7 @@ public class FServer {
 		try {
 			serverSocket = new DatagramSocket(Integer.parseInt(args[0]));
 			System.out.println("Server is up....");
-			receivedData = new byte[100];
+			receivedData = new byte[512];
 			sendData = new byte[512];
 
 
@@ -26,46 +26,47 @@ public class FServer {
 
 			port = receivedPacket.getPort();
 			ip = receivedPacket.getAddress();
-			reply = receivedPacket.getData().toString();
-			System.out.println(reply);
-			//String filename = reply.substring(7, reply.length()).trim();
-			String filename = "demoText.html";
-			// read file into buffer
-			fis = new FileInputStream(filename);
+			reply = new String(receivedPacket.getData());
+
+			System.out.println("CLIENT Says= " + reply);
+			String filename = reply.substring(8, reply.length()).trim();
+			//System.out.println(filename);
 
 			int consignment;
 			String strConsignment;
 			int result = 0; // number of bytes read
 			int count = 0;
-	 
+
+			fis = new FileInputStream(filename);
+
 			while(true && result!=-1){
-	 
-				receivedData = new byte[100];
+				receivedData = new byte[512];
 				sendData = new byte[512];
 
-				// get client's consignment request from DatagramPacket
-				ip = receivedPacket.getAddress();
-				port =receivedPacket.getPort();
-				System.out.println("Client IP Address = " + ip);
-				System.out.println("Client port = " + port);
-
+				//getting data from file and sending to client
 				result = fis.read(sendData);
-				if (result==-1){
-				    sendData = new String("RTD " + count + " END\r\n").getBytes();
-                }else{
-				    sendData = new String("RTD" + count + new String(sendData) + " \r\n").getBytes();
-                }
+
+				if(result == -1) {
+					sendData = new String("RTD " + count + " END \r\n").getBytes();
+				}else{
+					sendData = new String("RTD " + count + " " + new String(sendData) + " \r\n").getBytes();
+				}
 
 				sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
 				serverSocket.send(sendPacket);
 
+				//getting acknowledgement from client
 				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
 				serverSocket.receive(receivedPacket);
+				String ackMsg = new String(receivedPacket.getData());
+				System.out.println(ackMsg);
+				//
 
-				String ack = receivedPacket.getData().toString();
-				System.out.println(ack);
+				receivedPacket = null;
+				sendPacket = null;
 				count++;
 			}
+
 			
 		} catch (IOException ex) {
 			System.out.println(ex.getMessage());

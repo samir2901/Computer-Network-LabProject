@@ -21,13 +21,15 @@ public class FClient {
 
 			int count=0;
 			boolean end = false;
+			receivedData = new byte[512];
+			sendData = new byte[512];
 
 			String filename = "demoText.html";
 			// write received data into demoText-received.html
 			fos = new FileOutputStream(filename.split("\\.")[0] + "-received." + filename.split("\\.")[1]);
 
-			String requestMessage = "REQUEST" + filename + " \r\n";
-			System.out.println(requestMessage);
+			String requestMessage = "REQUEST " + filename + " \r\n";
+			//System.out.println(requestMessage);
 
 			sendData = requestMessage.getBytes();
 
@@ -40,36 +42,34 @@ public class FClient {
 
 			clientSocket.send(sendPacket);
 
+
 			while(!end)
 			{
-			    receivedData = new byte[1024];
-			    receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-			    clientSocket.receive(receivedPacket);
+				receivedData = new byte[512];
+				sendData = new byte[512];
 
-			    reply = receivedPacket.getData().toString();
+				//getting data from server
+				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+				clientSocket.receive(receivedPacket);
+				reply = new String(receivedPacket.getData());
+				System.out.println("Server says= " + reply);
 
-			    String[] split = reply.split(" ");
+				String[] split = reply.split(" ");
 
-			    if (reply.trim().endsWith("END")){
-			    	end = true;
-			    	break;
-				}
-
-			    //sending acknowlegdement
-				String ackMessage = "ACK" + (split[1]).trim() + "\r\n";
-
-				sendData = ackMessage.getBytes();
-				sendPacket = new DatagramPacket(
-						sendData,
-						sendData.length,
-						InetAddress.getByName(args[0]),
-						Integer.parseInt(args[1])
-				);
-
+				//sending acknowledgment
+				String ackMsg = "ACK " + (split[1]).trim() + " \r\n";
+				sendData = ackMsg.getBytes();
+				sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
 				clientSocket.send(sendPacket);
 
-				System.out.println(reply.substring(5+split[1].length(), reply.length()-2));
-				fos.write(reply.substring(5+split[1].length(), reply.length()-2).getBytes());
+				if (reply.contains("END")){
+					end = true;
+					break;
+				}
+
+				String data = reply.substring(5+split[1].length(),reply.length()-2);
+				System.out.println("LINE RECEIVED: " + data);
+				fos.write(data.getBytes());
 
 				count++;
 			}
