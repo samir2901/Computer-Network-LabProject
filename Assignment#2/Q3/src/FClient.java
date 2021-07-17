@@ -1,91 +1,98 @@
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
- 
+
+
 public class FClient {
- 
-	public static void main(String[] args) {
-	 
-	    DatagramSocket clientSocket = null;
-		FileOutputStream fos = null;
-		DatagramPacket receivedPacket, sendPacket;
-		String reply;
-		InetAddress ip;
-		int port;
+    private static final double LOSS_RATE = 0.3;
 
-		try {
-	    	clientSocket = new DatagramSocket();
+    public static void main(String[] args) {
+        DatagramSocket clientSocket = null;
+        FileOutputStream fos = null;
+        DatagramPacket receivedPacket, sendPacket;
+        String reply;
+        InetAddress ip;
+        int port;
 
-			byte[] receivedData, sendData;
+        try {
+            clientSocket = new DatagramSocket();
+            clientSocket.setSoTimeout(5000);
+            byte[] receivedData, sendData;
 
-			int count=0;
-			boolean end = false;
-			receivedData = new byte[512];
-			sendData = new byte[512];
+            int count=0;
+            boolean end = false;
+            receivedData = new byte[512];
+            sendData = new byte[512];
 
-			String filename = "demoText.html";
-			// write received data into demoText-received.html
-			fos = new FileOutputStream(filename.split("\\.")[0] + "-received." + filename.split("\\.")[1]);
+            String filename = "demoText.html";
+            // write received data into demoText-received.html
+            fos = new FileOutputStream(filename.split("\\.")[0] + "-received." + filename.split("\\.")[1]);
 
-			String requestMessage = "REQUEST " + filename + " \r\n";
-			//System.out.println(requestMessage);
+            String requestMessage = "REQUEST " + filename + " \r\n";
+            //System.out.println(requestMessage);
 
-			sendData = requestMessage.getBytes();
+            sendData = requestMessage.getBytes();
 
-			sendPacket = new DatagramPacket(
-					sendData,
-					sendData.length,
-					InetAddress.getByName(args[0]),
-					Integer.parseInt(args[1])
-			);
+            sendPacket = new DatagramPacket(
+                    sendData,
+                    sendData.length,
+                    InetAddress.getByName(args[0]),
+                    Integer.parseInt(args[1])
+            );
 
-			clientSocket.send(sendPacket);
+            clientSocket.send(sendPacket);
 
 
-			while(!end)
-			{
-				receivedData = new byte[512];
-				sendData = new byte[512];
+            while(!end)
+            {
+                receivedData = new byte[512];
+                sendData = new byte[512];
 
-				//getting data from server
-				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-				clientSocket.receive(receivedPacket);
-				reply = new String(receivedPacket.getData());
-				System.out.println("Server says= " + reply);
+                //getting data from server
+                receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+                clientSocket.receive(receivedPacket);
+                reply = new String(receivedPacket.getData());
+                System.out.println("Server says= " + reply);
 
-				String[] split = reply.split(" ");
+                String[] split = reply.split(" ");
 
-				//sending acknowledgment
-				String ackMsg = "ACK " + (split[1]).trim() + " \r\n";
-				sendData = ackMsg.getBytes();
-				sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
-				clientSocket.send(sendPacket);
+                //sending acknowledgment
+                if (Math.random()>LOSS_RATE)
+                {
+                    String ackMsg = "ACK " + (split[1]).trim() + " \r\n";
+                    sendData = ackMsg.getBytes();
+                    sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+                    clientSocket.send(sendPacket);
+                    break;
+                }
 
-				if (reply.contains("END")){
-					end = true;
-					break;
-				}
 
-				String data = reply.substring(5+split[1].length(),reply.length()-2);
-				System.out.println("LINE RECEIVED: " + data);
-				fos.write(data.getBytes());
+                if (reply.contains("END")){
+                    end = true;
+                    break;
+                }
 
-				count++;
-			}
+                String data = reply.substring(5+split[1].length(),reply.length()-2);
+                System.out.println("LINE RECEIVED: " + data);
+                fos.write(data.getBytes());
 
-		} catch (IOException ex) {
-			System.out.println(ex.getMessage());
+                count++;
+            }
 
-		} finally {
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
 
-			try {
-				if (fos != null)
-					fos.close();
-				if (clientSocket != null)
-					clientSocket.close();
-			} catch (IOException ex) {
-				System.out.println(ex.getMessage());
-			}
-		}
-	}
+        } finally {
+
+            try {
+                if (fos != null)
+                    fos.close();
+                if (clientSocket != null)
+                    clientSocket.close();
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
 }
