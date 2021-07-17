@@ -3,6 +3,7 @@ import java.io.*;
 import java.util.*;
  
 public class FServer {
+	private static final double LOSS_RATE = 0.3;
 
 	public static void main(String[] args) {
  
@@ -16,6 +17,7 @@ public class FServer {
 		
 		try {
 			serverSocket = new DatagramSocket(Integer.parseInt(args[0]));
+			serverSocket.setSoTimeout(3000); // set timeout to 3000ms
 			System.out.println("Server is up....");
 			receivedData = new byte[512];
 			sendData = new byte[512];
@@ -53,11 +55,17 @@ public class FServer {
 				}
 
 				sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
-				serverSocket.send(sendPacket);
+				if (Math.random()>LOSS_RATE){
+					serverSocket.send(sendPacket);
 
-				//getting acknowledgement from client
+					//getting acknowledgement from client
+					receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+					serverSocket.receive(receivedPacket);
+					break;
+				}
 				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
 				serverSocket.receive(receivedPacket);
+
 				String ackMsg = new String(receivedPacket.getData());
 				System.out.println(ackMsg);
 				//
