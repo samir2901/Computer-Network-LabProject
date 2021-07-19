@@ -51,7 +51,7 @@ public class FClient {
 				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
 				clientSocket.receive(receivedPacket);
 				reply = new String(receivedPacket.getData());
-				System.out.println("Server says= " + reply);
+				System.out.println(reply);
 
 				String[] split = reply.split(" ");
 
@@ -67,7 +67,7 @@ public class FClient {
 				}
 
 				String data = reply.substring(5+split[1].length(),reply.length()-2);
-				System.out.println("LINE RECEIVED: " + data);
+				System.out.println(data);
 				fos.write(data.getBytes());
 
 				count++;
