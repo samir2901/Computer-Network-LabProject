@@ -16,6 +16,7 @@ public class FServer {
 
         try {
             serverSocket = new DatagramSocket(Integer.parseInt(args[0]));
+            serverSocket.setSoTimeout(3000);
             System.out.println("Server is up....");
             receivedData = new byte[512];
             sendData = new byte[512];
@@ -56,8 +57,14 @@ public class FServer {
                 serverSocket.send(sendPacket);
 
                 //getting acknowledgement from client
-                receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-                serverSocket.receive(receivedPacket);
+                try{
+                    receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+                    serverSocket.receive(receivedPacket);
+                }catch(Exception e){
+                    System.out.println(e.toString());
+                    System.out.println("Timeout as acknowledgement not received and resending.....");
+                }
+
                 String ackMsg = new String(receivedPacket.getData());
                 System.out.println(ackMsg);
                 //

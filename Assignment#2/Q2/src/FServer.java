@@ -62,9 +62,17 @@ public class FServer {
 					receivedPacket = new DatagramPacket(receivedData,receivedData.length);					
 					break;
 				}
-				serverSocket.receive(receivedPacket); ///-----------------------------------------------
-				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-				serverSocket.receive(receivedPacket);
+				serverSocket.receive(receivedPacket); 
+
+				try {
+					receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+					serverSocket.receive(receivedPacket);					
+				} catch (Exception e) {
+					//TODO: handle exception
+					System.out.println(e.toString());
+                    System.out.println("Timeout as acknowledgement not received and resending.....");
+				}
+				
 
 				String ackMsg = new String(receivedPacket.getData());
 				System.out.println(ackMsg);
