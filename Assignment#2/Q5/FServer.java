@@ -16,8 +16,9 @@ public class FServer {
 		
 		try {
 			serverSocket = new DatagramSocket(Integer.parseInt(args[0]));
+			serverSocket.setSoTimeout(3000);
 			System.out.println("Server is up....");
-			receivedData = new byte[512];
+			receivedData = new byte[100];
 			sendData = new byte[512];
 
 
@@ -28,7 +29,7 @@ public class FServer {
 			ip = receivedPacket.getAddress();
 			reply = new String(receivedPacket.getData());
 
-			System.out.println("CLIENT Says= " + reply);
+			System.out.println("CLIENT Says = " + reply);
 			String filename = reply.substring(8, reply.length()).trim();
 			//System.out.println(filename);
 
@@ -40,26 +41,44 @@ public class FServer {
 			fis = new FileInputStream(filename);
 
 			while(true && result!=-1){
-				receivedData = new byte[512];
+				receivedData = new byte[100];
 				sendData = new byte[512];
 
 				//getting data from file and sending to client
 				result = fis.read(sendData);
 
+				/*
+					result = fis.read(sd);
+					if (result == -1) {
+						sd = new String("RTD "+ count + " END \r\n").getBytes();
+					} else {
+						sd = new String("RTD "+ count+ " " + Base64.getEncoder().encodeToString(sd) +" \r\n").getBytes();
+					}
+					*/
+
 				if(result == -1) {
 					sendData = new String("RTD " + count + " END \r\n").getBytes();
 				}else{
-					sendData = new String("RTD " + count + " " + new String(sendData) + " \r\n").getBytes();
+					sendData = new String("RTD " + count + " " + Base64.getEncoder().encodeToString(sendData) + " \r\n").getBytes();
 				}
 
-				sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
-				serverSocket.send(sendPacket);
-
-				//getting acknowledgement from client
-				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-				serverSocket.receive(receivedPacket);
+				while(true){
+					sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
+					serverSocket.send(sendPacket);
+					try {
+						//getting acknowledgement from client
+						receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+						serverSocket.receive(receivedPacket);
+						break;
+					} catch (Exception e) {
+						//TODO: handle exception
+						System.out.println(e.toString());
+						System.out.println("Timeout as acknowledgement not received and resending.....");
+					}
+					
+				}
 				String ackMsg = new String(receivedPacket.getData());
-				System.out.println(ackMsg);
+				System.out.println("Client Says =" + ackMsg);
 				//
 
 				receivedPacket = null;

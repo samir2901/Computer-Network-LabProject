@@ -54,23 +54,26 @@ public class FServer {
 					sendData = new String("RTD " + count + " " + new String(sendData) + " \r\n").getBytes();
 				}
 
-				sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
-				if (Math.random()>LOSS_RATE){
-					serverSocket.send(sendPacket);
+				while(true){
+					sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
+					if (Math.random()>LOSS_RATE){
+						serverSocket.send(sendPacket);
 
-					//getting acknowledgement from client
-					receivedPacket = new DatagramPacket(receivedData,receivedData.length);					
-					break;
-				}
-				serverSocket.receive(receivedPacket); 
-
-				try {
-					receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-					serverSocket.receive(receivedPacket);					
-				} catch (Exception e) {
-					//TODO: handle exception
-					System.out.println(e.toString());
-                    System.out.println("Timeout as acknowledgement not received and resending.....");
+						//getting acknowledgement from client
+						receivedPacket = new DatagramPacket(receivedData,receivedData.length);					
+						break;
+					}
+					serverSocket.receive(receivedPacket); 
+					
+					try {
+						receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+						serverSocket.receive(receivedPacket);					
+						break;
+					} catch (Exception e) {
+						//TODO: handle exception
+						System.out.println(e.toString());
+						System.out.println("Timeout as acknowledgement not received and resending.....");
+					}
 				}
 				
 

@@ -52,17 +52,19 @@ public class FServer {
                 }else{
                     sendData = new String("RTD " + count + " " + new String(sendData) + " \r\n").getBytes();
                 }
-
-                sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
-                serverSocket.send(sendPacket);
-
-                //getting acknowledgement from client
-                try{
-                    receivedPacket = new DatagramPacket(receivedData,receivedData.length);
-                    serverSocket.receive(receivedPacket);
-                }catch(Exception e){
-                    System.out.println(e.toString());
-                    System.out.println("Timeout as acknowledgement not received and resending.....");
+                
+                while(true){
+                    sendPacket = new DatagramPacket(sendData,sendData.length,ip,port);
+                    serverSocket.send(sendPacket);
+                    //getting acknowledgement from client
+                    try{
+                        receivedPacket = new DatagramPacket(receivedData,receivedData.length);
+                        serverSocket.receive(receivedPacket);
+                        break;
+                    }catch(Exception e){
+                        System.out.println(e.toString());
+                        System.out.println("Timeout as acknowledgement not received and resending.....");
+                    }
                 }
 
                 String ackMsg = new String(receivedPacket.getData());

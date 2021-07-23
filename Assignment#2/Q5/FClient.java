@@ -10,6 +10,7 @@ public class FClient {
 		FileOutputStream fos = null;
 		DatagramPacket receivedPacket, sendPacket;
 		String reply;
+		String prevReply = "";
 		InetAddress ip;
 		int port;
 
@@ -44,14 +45,14 @@ public class FClient {
 
 			while(!end)
 			{
-				receivedData = new byte[512];
+				receivedData = new byte[1024];
 				sendData = new byte[512];
 
 				//getting data from server
 				receivedPacket = new DatagramPacket(receivedData,receivedData.length);
 				clientSocket.receive(receivedPacket);
 				reply = new String(receivedPacket.getData());
-				System.out.println(reply);
+				//System.out.println(reply);
 
 				String[] split = reply.split(" ");
 
@@ -66,9 +67,16 @@ public class FClient {
 					break;
 				}
 
-				String data = reply.substring(5+split[1].length(),reply.length()-2);
-				System.out.println(data);
-				fos.write(data.getBytes());
+				if(reply.equals(prevReply)){
+					continue;
+				}
+
+				prevReply = reply;
+
+				String data = split[2];				
+				byte[] actualByte = Base64.getDecoder().decode(data.getBytes());
+				System.out.println(new String(actualByte));				
+				fos.write(actualByte);
 
 				count++;
 			}
