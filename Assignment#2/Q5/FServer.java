@@ -47,14 +47,7 @@ public class FServer {
 				//getting data from file and sending to client
 				result = fis.read(sendData);
 
-				/*
-					result = fis.read(sd);
-					if (result == -1) {
-						sd = new String("RTD "+ count + " END \r\n").getBytes();
-					} else {
-						sd = new String("RTD "+ count+ " " + Base64.getEncoder().encodeToString(sd) +" \r\n").getBytes();
-					}
-					*/
+				
 
 				if(result == -1) {
 					sendData = new String("RTD " + count + " END \r\n").getBytes();
